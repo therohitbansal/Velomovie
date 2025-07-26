@@ -84,7 +84,9 @@ def get_download_link(movie_name, quality):
     options.add_argument("--disable-blink-features=AutomationControlled")
     prefs = {"download.prompt_for_download": False, "download.directory_upgrade": True}
     options.add_experimental_option("prefs", prefs)
+    options.binary_location = "/usr/bin/google-chrome"
 
+    driver = uc.Chrome(options=options)
     driver = uc.Chrome(options=options)
     driver.get("https://hdhub4u.gifts/")
     print(driver.title)
