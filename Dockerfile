@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-# Install dependencies for Chrome
+# Install Chrome & dependencies
 RUN apt-get update && apt-get install -y \
     wget unzip gnupg curl lsb-release \
     fonts-liberation libappindicator3-1 libasound2 libatk-bridge2.0-0 libatk1.0-0 \
@@ -8,24 +8,33 @@ RUN apt-get update && apt-get install -y \
     libxdamage1 libxrandr2 xdg-utils \
     && wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
     && apt-get install -y ./google-chrome-stable_current_amd64.deb \
-    && rm google-chrome-stable_current_amd64.deb \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm google-chrome-stable_current_amd64.deb
 
-# Set Chrome binary path as env (for Selenium / undetected-chromedriver)
+# Install ChromeDriver (must match Chrome version)
+RUN CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+') && \
+    CHROMEDRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION) && \
+    wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip && \
+    unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
+    rm /tmp/chromedriver.zip
+
+# Clean up
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Set Chrome binary path
 ENV GOOGLE_CHROME_BIN="/usr/bin/google-chrome"
-ENV PATH="${GOOGLE_CHROME_BIN}:${PATH}"
+ENV CHROMEDRIVER_PATH="/usr/local/bin/chromedriver"
+ENV PATH="${GOOGLE_CHROME_BIN}:${CHROMEDRIVER_PATH}:${PATH}"
 
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Add application code
+# Copy your code
 COPY . /app
 WORKDIR /app
 
-# Expose port (if using FastAPI/Uvicorn)
+# Expose port (if needed)
 EXPOSE 8000
 
-# Run your backend with uvicorn (more production-ready)
+# Run your app
 CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
