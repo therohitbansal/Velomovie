@@ -80,14 +80,17 @@ def get_download_link(movie_name, quality):
 
     # --------------------- Main Script ---------------------
     options = uc.ChromeOptions()
+    options.binary_location = "/usr/bin/google-chrome"
+    options.add_argument("--headless=new")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-popup-blocking")
     options.add_argument("--disable-blink-features=AutomationControlled")
     prefs = {"download.prompt_for_download": False, "download.directory_upgrade": True}
     options.add_experimental_option("prefs", prefs)
-    options.binary_location = "/usr/bin/google-chrome"
 
-    driver = uc.Chrome(options=options)
-    driver = uc.Chrome(options=options)
+    # ✅ Use use_subprocess=True for Railway compatibility
+    driver = uc.Chrome(options=options, use_subprocess=True)
     driver.get("https://hdhub4u.gifts/")
     print(driver.title)
 
