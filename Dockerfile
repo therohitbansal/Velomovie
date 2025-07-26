@@ -7,18 +7,25 @@ RUN apt-get update && apt-get install -y \
     libcups2 libdbus-1-3 libgdk-pixbuf2.0-0 libnspr4 libnss3 libx11-xcb1 libxcomposite1 \
     libxdamage1 libxrandr2 xdg-utils \
     && wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
-    && dpkg -i google-chrome*.deb || apt-get -f install -y
+    && apt-get install -y ./google-chrome-stable_current_amd64.deb \
+    && rm google-chrome-stable_current_amd64.deb \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Set Chrome path
-ENV PATH="/usr/bin/google-chrome:$PATH"
+# Set Chrome binary path as env (for Selenium / undetected-chromedriver)
+ENV GOOGLE_CHROME_BIN="/usr/bin/google-chrome"
+ENV PATH="${GOOGLE_CHROME_BIN}:${PATH}"
 
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Add app code
+# Add application code
 COPY . /app
 WORKDIR /app
 
-# Run your backend (replace with your file)
-CMD ["python", "main.py"]
+# Expose port (if using FastAPI/Uvicorn)
+EXPOSE 8000
+
+# Run your backend with uvicorn (more production-ready)
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
