@@ -12,11 +12,11 @@ RUN apt-get update && apt-get install -y \
 RUN wget -O chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
     apt install -y ./chrome.deb && rm chrome.deb
 
-# Add pre-downloaded chromedriver to container
-COPY chromedriver /usr/local/bin/
+# Add pre-downloaded chromedriver binary (must be in same folder)
+COPY chromedriver /usr/local/bin/chromedriver
 RUN chmod +x /usr/local/bin/chromedriver
 
-# Set environment variables for Chrome and Chromedriver
+# Set env paths
 ENV GOOGLE_CHROME_BIN="/usr/bin/google-chrome"
 ENV CHROMEDRIVER_PATH="/usr/local/bin/chromedriver"
 ENV PATH="${GOOGLE_CHROME_BIN}:${CHROMEDRIVER_PATH}:${PATH}"
@@ -25,12 +25,9 @@ ENV PATH="${GOOGLE_CHROME_BIN}:${CHROMEDRIVER_PATH}:${PATH}"
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy app code
+# Copy application code
 COPY . /app
 WORKDIR /app
 
-# Expose port for FastAPI
 EXPOSE 8000
-
-# Start FastAPI app
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "${PORT}"]
